@@ -83,4 +83,27 @@ export class BlogService {
 
     return { message: "Create blog success" };
   };
+
+  deleteBlog = async (id: number, authUserId: number) => {
+    const blog = await this.prisma.blog.findFirst({
+      where: { id, deletedAt: null },
+    });
+
+    if (!blog) {
+      throw new ApiError("Blog not found", 404);
+    }
+
+    if (blog.userId !== authUserId) {
+      throw new ApiError("Unauthorized", 401);
+    }
+
+    await this.cloudinaryService.remove(blog.thumbnail);
+
+    await this.prisma.blog.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+
+    return { message: "Delete blog success" };
+  };
 }
